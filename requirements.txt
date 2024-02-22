@@ -1,7 +1,6 @@
 attrs==23.2.0
 exceptiongroup==1.2.0
 galois==0.3.8
-gmpy2==2.1.5
 hypothesis==6.98.10
 iniconfig==2.0.0
 llvmlite==0.42.0
