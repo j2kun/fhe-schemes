@@ -11,6 +11,5 @@ paper, but a variant based on
 In particular, this implementation is "vanilla" in that it does **not**
 incorporate a number of optimizations:
 
-- RNS decompositions (uses gmp for multiprecision ints instead)
+- CRT/RNS decompositions (uses gmp for multiprecision ints instead)
 - Hybrid key switching
-- NTTs
