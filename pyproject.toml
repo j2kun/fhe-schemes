@@ -1,0 +1,60 @@
+[tool.ruff]
+line-length = 88
+select = ["E", "F"]
+exclude = [
+  ".git",
+  ".ruff_cache",
+  "__pycache__",
+  "build",
+  "data",
+  "node_modules",
+  "venv",
+]
+ignore = [
+  "E402",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+
+[tool.pytest.ini_options]
+addopts = "--mypy -v"
+norecursedirs = [
+  ".git",
+  "__pycache__",
+  "data",
+  "node_modules",
+  "venv",
+]
+
+[tool.isort]
+profile = "open_stack"
+
+[tool.mypy]
+python_version = "3.11"
+
+[[tool.mypy.overrides]]
+module = [
+  "pytest",
+]
+ignore_missing_imports = true
+
+[tool.coverage.run]
+omit = [
+  "*_test.py",
+  "*site-packages*",
+  "__pycache__/*",
+  "venv/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+  "@abc.abstractmethod",
+  "@abstractmethod",
+  "def __repr__",
+  "if __name__ == .__main__.:",
+  "pass",
+  "pragma: no cover",
+  "raise NotImplementedError",
+]
