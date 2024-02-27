@@ -69,12 +69,10 @@ def encrypt(
             # If the noise is below this bound, the decryption will succeed
             # This is asserted here to help debug tests where the parameters
             # are incorrectly set so that the initial noise is too large.
-            initial_noise_bound = Q / (2 * t) - 0.5
+            initial_noise_bound = debug_data.error_bound(params)
             initial_noise_bound_bits = math.log2(initial_noise_bound)
             initial_noise_bits = math.log2(initial_noise)
-            print(
-                f"{initial_noise_bits=} < {initial_noise_bound_bits=}"
-            )
+            print(f"{initial_noise_bits=} < {initial_noise_bound_bits=}")
             assert initial_noise < initial_noise_bound, "Initial noise is too large!"
 
     return (a_0, a_1)
@@ -91,4 +89,34 @@ def decrypt(
             ct[0] + polymul(ct[1], sk), params.ciphertext_coeff_modulus
         ),
         params.plaintext_coeff_modulus,
+    )
+
+
+def extract_error_magnitude(
+    ct: types.Ciphertext,
+    pt: types.Plaintext,
+    sk: types.SecretKey,
+    params: BGVParams,
+) -> types.Plaintext:
+    """Decrypt the ciphertext and extract the error part."""
+    # Using the notation from https://eprint.iacr.org/2021/204, p6 equation (1)
+    # compute m' = [m]_t + tv_fresh mod Q_L (here Q_L = Q is the ciphertext
+    # modulus), then subtract off [m]_t and divide by t
+    m_prime = encoding.to_signed_half_range(
+        ct[0] + polymul(ct[1], sk), params.ciphertext_coeff_modulus
+    )
+    error_times_t = m_prime - pt
+    rescaled_error = error_times_t // params.plaintext_coeff_modulus
+    return np.max(np.abs(rescaled_error))
+
+
+def add(
+    ct1: types.Ciphertext,
+    ct2: types.Ciphertext,
+    params: BGVParams,
+) -> types.Ciphertext:
+    """Add two ciphertexts."""
+    return (
+        np.mod(ct1[0] + ct2[0], params.ciphertext_coeff_modulus),
+        np.mod(ct1[1] + ct2[1], params.ciphertext_coeff_modulus),
     )

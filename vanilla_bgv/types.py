@@ -34,3 +34,8 @@ class DebugData:
 
     pk_error_sample: np.ndarray
     secret_key: np.ndarray
+
+    def error_bound(self, params) -> float:
+        Q = params.ciphertext_coeff_modulus
+        t = params.plaintext_coeff_modulus
+        return Q / (2 * t) - 0.5
