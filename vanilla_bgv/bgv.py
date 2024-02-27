@@ -12,12 +12,14 @@ from vanilla_bgv.params import BGVParams
 
 # None of these random samples are cryptographically secure!
 def key_sample(size):
+    """Sample from the secret key distribution."""
     return np.random.randint(
         -1, 2, size=size, dtype=np.int64
     )  # sampling from {-1, 0, 1}
 
 
 def error_sample(params, size):
+    """Sample from the error distribution."""
     return np.round(np.random.normal(0, params.error_stdev, size=size)).astype(np.int64)
 
 
@@ -64,6 +66,9 @@ def encrypt(
         )
         initial_noise = np.max(np.abs(error_fresh))
         if initial_noise > 0:
+            # If the noise is below this bound, the decryption will succeed
+            # This is asserted here to help debug tests where the parameters
+            # are incorrectly set so that the initial noise is too large.
             initial_noise_bound = Q / (2 * t) - 0.5
             initial_noise_bound_bits = math.log2(initial_noise_bound)
             initial_noise_bits = math.log2(initial_noise)
