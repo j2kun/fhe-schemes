@@ -10,7 +10,7 @@ from vanilla_bgv import encoding
 
 ERROR_FREE_TEST_PARAMS = bgv.BGVParams(
     poly_mod_degree=16,
-    plaintext_coeff_modulus_num_bits=16,
+    plaintext_coeff_modulus_num_bits=8,
     ciphertext_coeff_modulus=2659 * 2663,
     error_stdev=0,
 )
@@ -43,7 +43,7 @@ def test_encrypt_decrypt_with_small_noise(seed):
     random.seed(seed)
     params = bgv.BGVParams(
         poly_mod_degree=16,
-        plaintext_coeff_modulus_num_bits=16,
+        plaintext_coeff_modulus_num_bits=8,
         ciphertext_coeff_modulus=2659 * 2663,
         error_stdev=5,
     )

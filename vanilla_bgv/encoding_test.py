@@ -7,7 +7,7 @@ from vanilla_bgv.params import BGVParams
 
 TEST_PARAMS = BGVParams(
     poly_mod_degree=2**4,
-    plaintext_coeff_modulus_num_bits=32,
+    plaintext_coeff_modulus_num_bits=8,
     ciphertext_coeff_modulus=2**64,  # unused in encode
 )
 
