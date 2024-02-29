@@ -73,3 +73,8 @@ def inverse(n, modulus):
     """Compute the multiplicative inverse of n by the given modulus."""
     _, m, _ = galois.egcd(n, modulus)
     return m
+
+
+def round_to_nearest_multiple(n: float, multiple_of: int) -> int:
+    """Round n to the nearest multiple of a given number."""
+    return round(n / multiple_of) * multiple_of
