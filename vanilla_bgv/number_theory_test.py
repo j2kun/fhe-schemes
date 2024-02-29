@@ -56,3 +56,11 @@ def test_negacyclic_polymul(p1, p2):
     expected = _np_negacyclic_polymul(p1, p2)
     actual = polymul(p1, p2)
     np.testing.assert_array_equal(expected, actual)
+
+
+@given(st.integers(min_value=7, max_value=16))
+def test_multiplicative_inverse(num_bits):
+    prime = galois.random_prime(bits=num_bits, seed=1)
+    for x in range(1, prime):
+        actual = inverse(x, prime)
+        assert (actual * x) % prime == 1

@@ -67,3 +67,9 @@ def negacyclic_polymul_preimage_and_map_back_conv(p1, p2):
 def polymul(p1, p2):
     """Compute the negacyclic polynomial product of p1 and p2."""
     return negacyclic_polymul_preimage_and_map_back_conv(p1, p2)
+
+
+def inverse(n, modulus):
+    """Compute the multiplicative inverse of n by the given modulus."""
+    _, m, _ = galois.egcd(n, modulus)
+    return m
