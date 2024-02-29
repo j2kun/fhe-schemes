@@ -1,9 +1,9 @@
 """The BGV homomorphic encryption scheme."""
+
 import math
 from typing import Optional
 
 import numpy as np
-
 from vanilla_bgv import encoding
 from vanilla_bgv import types
 from vanilla_bgv.number_theory import polymul
@@ -75,7 +75,12 @@ def encrypt(
             print(f"{initial_noise_bits=} < {initial_noise_bound_bits=}")
             assert initial_noise < initial_noise_bound, "Initial noise is too large!"
 
-    return (a_0, a_1)
+    return types.Ciphertext(
+        polynomials=(a_0, a_1),
+        # every ciphertext starts at the highest modulus in the chain,
+        # and is lowered to smaller moduli during modulus switching.
+        modulus_index=params.modulus_chain_length - 1,
+    )
 
 
 def decrypt(
@@ -84,9 +89,10 @@ def decrypt(
     params: BGVParams,
 ) -> types.Plaintext:
     """Decrypt a ciphertext."""
+    polys = ct.polynomials
     return encoding.to_signed_half_range(
         encoding.to_signed_half_range(
-            ct[0] + polymul(ct[1], sk), params.ciphertext_coeff_modulus
+            polys[0] + polymul(polys[1], sk), params.ciphertext_coeff_modulus
         ),
         params.plaintext_coeff_modulus,
     )
@@ -102,8 +108,9 @@ def extract_error_magnitude(
     # Using the notation from https://eprint.iacr.org/2021/204, p6 equation (1)
     # compute m' = [m]_t + tv_fresh mod Q_L (here Q_L = Q is the ciphertext
     # modulus), then subtract off [m]_t and divide by t
+    polys = ct.polynomials
     m_prime = encoding.to_signed_half_range(
-        ct[0] + polymul(ct[1], sk), params.ciphertext_coeff_modulus
+        polys[0] + polymul(polys[1], sk), params.ciphertext_coeff_modulus
     )
     error_times_t = m_prime - pt
     rescaled_error = error_times_t // params.plaintext_coeff_modulus
@@ -116,7 +123,20 @@ def add(
     params: BGVParams,
 ) -> types.Ciphertext:
     """Add two ciphertexts."""
-    return (
-        np.mod(ct1[0] + ct2[0], params.ciphertext_coeff_modulus),
-        np.mod(ct1[1] + ct2[1], params.ciphertext_coeff_modulus),
+    if ct1.modulus_index != ct2.modulus_index:
+        raise ValueError(
+            "Expected input ciphertexts to have the same "
+            f"moduli, but found {ct1.modulus_index=} != "
+            f"{ct2.modulus_index=}"
+        )
+
+    polys1 = ct1.polynomials
+    polys2 = ct2.polynomials
+    added_polys = (
+        np.mod(polys1[0] + polys2[0], params.ciphertext_coeff_modulus),
+        np.mod(polys1[1] + polys2[1], params.ciphertext_coeff_modulus),
+    )
+    return types.Ciphertext(
+        polynomials=added_polys,
+        modulus_index=ct1.modulus_index,
     )
