@@ -117,6 +117,39 @@ def extract_error_magnitude(
     return np.max(np.abs(rescaled_error))
 
 
+def switch_modulus(
+    ct: types.Ciphertext,
+    params: BGVParams,
+) -> types.Ciphertext:
+    """Switch ct to the next lower modulus in the modulus chain."""
+    if ct.modulus_index == 0:
+        raise ValueError(
+            "Cannot switch modulus because the input ciphertext is already at the "
+            "lowest modulus"
+        )
+    polys = ct.polynomials
+    # Using the terminology from https://eprint.iacr.org/2021/204
+    # page 7, after Remark 2.1
+    # Though we are lowering by one modulus exactly, we use the generic notation
+    # that allows one to switch to any lower modulus. One could instead take j as
+    # an argument if desired.
+    i = ct.modulus_index
+    j = ct.modulus_index - 1
+    t = params.plaintext_coeff_modulus
+    Q_i = params.ciphertext_moduli[i]
+    Q_j = params.ciphertext_moduli[j]
+    delta = tuple(
+        t * encoding.to_signed_half_range(-polys[i] // t, Q_j // Q_i) for i in range(2)
+    )
+    switched_polys = tuple(
+        np.mod(Q_i * (polys[i] + delta[i]) // Q_j, Q_i) for i in range(2)
+    )
+    return types.Ciphertext(
+        polynomials=switched_polys,
+        modulus_index=j,
+    )
+
+
 def add(
     ct1: types.Ciphertext,
     ct2: types.Ciphertext,

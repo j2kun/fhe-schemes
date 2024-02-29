@@ -42,6 +42,21 @@ def test_encrypt_decrypt_noise_free_with_encoding():
     assert message == actual[: len(message)], actual
 
 
+def test_switch_modulus():
+    # Just encrypt, modulus switch, and decrypt
+    random.seed(1)
+    pk, sk, debug_data = bgv.gen_keys(ERROR_FREE_TEST_PARAMS)
+    message = [1, 2, 3, 4]
+    plaintext = encoding.encode(message, ERROR_FREE_TEST_PARAMS)
+    ct = bgv.encrypt(
+        plaintext, pk=pk, params=ERROR_FREE_TEST_PARAMS, debug_data=debug_data
+    )
+    ct = bgv.switch_modulus(ct, ERROR_FREE_TEST_PARAMS)
+    decrypted = bgv.decrypt(ct, sk=sk, params=ERROR_FREE_TEST_PARAMS)
+    actual = encoding.decode(decrypted, ERROR_FREE_TEST_PARAMS)
+    assert message == actual[: len(message)], actual
+
+
 @given(st.integers())
 @settings(deadline=None)
 def test_encrypt_decrypt_with_small_noise(seed):
