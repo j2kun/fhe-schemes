@@ -45,15 +45,17 @@ def test_encrypt_decrypt_noise_free_with_encoding():
 def test_switch_modulus():
     # Just encrypt, modulus switch, and decrypt
     random.seed(1)
-    pk, sk, debug_data = bgv.gen_keys(ERROR_FREE_TEST_PARAMS)
+    params = ERROR_FREE_TEST_PARAMS
+    pk, sk, debug_data = bgv.gen_keys(params)
     message = [1, 2, 3, 4]
-    plaintext = encoding.encode(message, ERROR_FREE_TEST_PARAMS)
+    plaintext = encoding.encode(message, params)
     ct = bgv.encrypt(
-        plaintext, pk=pk, params=ERROR_FREE_TEST_PARAMS, debug_data=debug_data
+        plaintext, pk=pk, params=params, debug_data=debug_data
     )
-    ct = bgv.switch_modulus(ct, ERROR_FREE_TEST_PARAMS)
-    decrypted = bgv.decrypt(ct, sk=sk, params=ERROR_FREE_TEST_PARAMS)
-    actual = encoding.decode(decrypted, ERROR_FREE_TEST_PARAMS)
+    # import ipdb; ipdb.set_trace()
+    ct = bgv.switch_modulus(ct, params)
+    decrypted = bgv.decrypt(ct, sk=sk, params=params)
+    actual = encoding.decode(decrypted, params)
     assert message == actual[: len(message)], actual
 
 

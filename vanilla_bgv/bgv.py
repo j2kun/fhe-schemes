@@ -6,7 +6,7 @@ from typing import Optional
 import numpy as np
 from vanilla_bgv import encoding
 from vanilla_bgv import types
-from vanilla_bgv.number_theory import polymul
+from vanilla_bgv import number_theory as nt
 from vanilla_bgv.params import BGVParams
 
 
@@ -35,7 +35,7 @@ def gen_keys(
     error = error_sample(params, N)
 
     pk = (
-        np.mod(polymul(sample, sk) + t * error, params.ciphertext_coeff_modulus),
+        np.mod(nt.polymul(sample, sk) + t * error, params.ciphertext_coeff_modulus),
         np.mod(-sample, params.ciphertext_coeff_modulus),
     )
 
@@ -55,13 +55,13 @@ def encrypt(
     t = params.plaintext_coeff_modulus
     Q = params.ciphertext_coeff_modulus
     error = (error_sample(params, N), error_sample(params, N))
-    a_0 = np.mod(pt + polymul(pk[0], u) + t * error[0], Q)
-    a_1 = np.mod(polymul(pk[1], u) + t * error[1], Q)
+    a_0 = np.mod(pt + nt.polymul(pk[0], u) + t * error[0], Q)
+    a_1 = np.mod(nt.polymul(pk[1], u) + t * error[1], Q)
 
     if debug_data:
         error_fresh = (
-            polymul(u, debug_data.pk_error_sample)
-            + polymul(error[1], debug_data.secret_key)
+            nt.polymul(u, debug_data.pk_error_sample)
+            + nt.polymul(error[1], debug_data.secret_key)
             + error[0]
         )
         initial_noise = np.max(np.abs(error_fresh))
@@ -92,7 +92,7 @@ def decrypt(
     polys = ct.polynomials
     return encoding.to_signed_half_range(
         encoding.to_signed_half_range(
-            polys[0] + polymul(polys[1], sk), params.ciphertext_coeff_modulus
+            polys[0] + nt.polymul(polys[1], sk), params.ciphertext_coeff_modulus
         ),
         params.plaintext_coeff_modulus,
     )
@@ -110,7 +110,7 @@ def extract_error_magnitude(
     # modulus), then subtract off [m]_t and divide by t
     polys = ct.polynomials
     m_prime = encoding.to_signed_half_range(
-        polys[0] + polymul(polys[1], sk), params.ciphertext_coeff_modulus
+        polys[0] + nt.polymul(polys[1], sk), params.ciphertext_coeff_modulus
     )
     error_times_t = m_prime - pt
     rescaled_error = error_times_t // params.plaintext_coeff_modulus
@@ -131,19 +131,31 @@ def switch_modulus(
     # Using the terminology from https://eprint.iacr.org/2021/204
     # page 7, after Remark 2.1
     # Though we are lowering by one modulus exactly, we use the generic notation
-    # that allows one to switch to any lower modulus. One could instead take j as
+    # that allows one to switch to any lower modulus. One could instead take i as
     # an argument if desired.
-    i = ct.modulus_index
-    j = ct.modulus_index - 1
+    i = ct.modulus_index - 1
+    j = ct.modulus_index
     t = params.plaintext_coeff_modulus
     Q_i = params.ciphertext_moduli[i]
     Q_j = params.ciphertext_moduli[j]
-    delta = tuple(
-        t * encoding.to_signed_half_range(-polys[i] // t, Q_j // Q_i) for i in range(2)
-    )
+
     switched_polys = tuple(
-        np.mod(Q_i * (polys[i] + delta[i]) // Q_j, Q_i) for i in range(2)
+        encoding.to_signed_half_range(
+            nt.round_to_nearest_multiple(Q_i * polys[k] // Q_j, t), Q_i
+        )
+        for k in range(2)
     )
+
+    # Below is an "RNS friendly" version but I can't get it to work yet.
+    # t_inv = nt.inverse(t, Q_j)
+    # delta = tuple(
+    #     -t * encoding.to_signed_half_range(polys[i] * t_inv * Q_i, Q_j)
+    #     for i in range(2)
+    # )
+    # switched_polys = tuple(
+    #     encoding.to_signed_half_range((Q_i * polys[i] + delta[i]) // Q_j, Q_i)
+    #     for i in range(2)
+    # )
     return types.Ciphertext(
         polynomials=switched_polys,
         modulus_index=j,

@@ -78,7 +78,8 @@ def test_multiplicative_inverse(num_bits):
 
 
 @given(
-    st.floats(min_value=1, max_value=100, allow_nan=False, allow_infinity=False),
+    # st.floats(min_value=1, max_value=100, allow_nan=False, allow_infinity=False),
+    st.integers(min_value=1, max_value=100),
     st.integers(min_value=1, max_value=100),
 )
 def test_round_to_nearest_multiple(a, b):

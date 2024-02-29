@@ -75,6 +75,9 @@ def inverse(n, modulus):
     return m
 
 
-def round_to_nearest_multiple(n: float, multiple_of: int) -> int:
+def round_to_nearest_multiple(n: np.ndarray, multiple_of: int) -> np.ndarray:
     """Round n to the nearest multiple of a given number."""
-    return round(n / multiple_of) * multiple_of
+    result = n + multiple_of // 2
+    result -= np.mod(result, multiple_of)
+    return result
+    # return (np.round(n / multiple_of) * multiple_of).astype(np.int64)
