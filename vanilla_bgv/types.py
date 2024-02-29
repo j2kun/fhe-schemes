@@ -1,4 +1,5 @@
 """Type definitions for BGV."""
+
 from dataclasses import dataclass
 import numpy as np
 
@@ -22,8 +23,15 @@ SecretKey = np.ndarray
 # A public key is a pair of polynomials with coefficients in Z/QZ.
 PublicKey = tuple[np.ndarray, np.ndarray]
 
+
 # A ciphertext is a pair of polynomials with coefficients in Z/QZ.
-Ciphertext = tuple[np.ndarray, np.ndarray]
+@dataclass
+class Ciphertext:
+    # For now, fix the (1, s) basis since we don't have multiplication yet
+    polynomials: tuple[np.ndarray, np.ndarray]
+
+    # the index of the modulus chain corresponding to this ciphertext
+    modulus_index: int
 
 
 # Debug data for learning purposes: allows us to see intermediate noise values

@@ -1,6 +1,5 @@
 from hypothesis import given, settings
 from hypothesis import strategies as st
-
 from vanilla_bgv.encoding import decode, encode
 from vanilla_bgv.params import BGVParams
 
@@ -8,7 +7,8 @@ from vanilla_bgv.params import BGVParams
 TEST_PARAMS = BGVParams(
     poly_mod_degree=2**4,
     plaintext_coeff_modulus_num_bits=8,
-    ciphertext_coeff_modulus=2**64,  # unused in encode
+    ciphertext_coeff_modulus_num_bits=32,
+    modulus_chain_length=2,
 )
 
 
@@ -32,7 +32,8 @@ def test_encode_decode_hypothesis(
     params = BGVParams(
         poly_mod_degree=poly_mod_degree,
         plaintext_coeff_modulus_num_bits=coeff_modulus_num_bits,
-        ciphertext_coeff_modulus=2**64,  # unused in encode
+        ciphertext_coeff_modulus_num_bits=32,
+        modulus_chain_length=2,
     )
     input = list(range(poly_mod_degree))
     actual = decode(encode(input, params), params)

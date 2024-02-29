@@ -1,10 +1,8 @@
 import math
 import random
-import numpy as np
-
 from hypothesis import given, settings
 from hypothesis import strategies as st
-
+import numpy as np
 from vanilla_bgv import bgv
 from vanilla_bgv import encoding
 
@@ -12,7 +10,8 @@ from vanilla_bgv import encoding
 ERROR_FREE_TEST_PARAMS = bgv.BGVParams(
     poly_mod_degree=16,
     plaintext_coeff_modulus_num_bits=8,
-    ciphertext_coeff_modulus=2659 * 2663,
+    ciphertext_coeff_modulus_num_bits=16,
+    modulus_chain_length=2,
     error_stdev=0,
 )
 
@@ -43,6 +42,23 @@ def test_encrypt_decrypt_noise_free_with_encoding():
     assert message == actual[: len(message)], actual
 
 
+def test_switch_modulus():
+    # Just encrypt, modulus switch, and decrypt
+    random.seed(1)
+    params = ERROR_FREE_TEST_PARAMS
+    pk, sk, debug_data = bgv.gen_keys(params)
+    message = [1, 2, 3, 4]
+    plaintext = encoding.encode(message, params)
+    ct = bgv.encrypt(
+        plaintext, pk=pk, params=params, debug_data=debug_data
+    )
+    # import ipdb; ipdb.set_trace()
+    ct = bgv.switch_modulus(ct, params)
+    decrypted = bgv.decrypt(ct, sk=sk, params=params)
+    actual = encoding.decode(decrypted, params)
+    assert message == actual[: len(message)], actual
+
+
 @given(st.integers())
 @settings(deadline=None)
 def test_encrypt_decrypt_with_small_noise(seed):
@@ -50,7 +66,8 @@ def test_encrypt_decrypt_with_small_noise(seed):
     params = bgv.BGVParams(
         poly_mod_degree=16,
         plaintext_coeff_modulus_num_bits=8,
-        ciphertext_coeff_modulus=2659 * 2663,
+        ciphertext_coeff_modulus_num_bits=16,
+        modulus_chain_length=2,
         error_stdev=5,
     )
     pk, sk, debug_data = bgv.gen_keys(params)
@@ -67,7 +84,8 @@ def test_encrypt_decrypt_with_large_noise():
     params = bgv.BGVParams(
         poly_mod_degree=2048,
         plaintext_coeff_modulus_num_bits=32,
-        ciphertext_coeff_modulus=242744763933053,  # a 48-bit prime
+        ciphertext_coeff_modulus_num_bits=48,
+        modulus_chain_length=1,
         error_stdev=2**7,
     )
     pk, sk, debug_data = bgv.gen_keys(params)
@@ -99,7 +117,8 @@ def test_add_noisy():
     params = bgv.BGVParams(
         poly_mod_degree=16,
         plaintext_coeff_modulus_num_bits=8,
-        ciphertext_coeff_modulus=2659 * 2663,
+        ciphertext_coeff_modulus_num_bits=48,
+        modulus_chain_length=1,
         error_stdev=5,
     )
     pk, sk, debug_data = bgv.gen_keys(params)
@@ -121,7 +140,8 @@ def test_iterated_add_noisy():
     params = bgv.BGVParams(
         poly_mod_degree=16,
         plaintext_coeff_modulus_num_bits=8,
-        ciphertext_coeff_modulus=2659 * 2663,
+        ciphertext_coeff_modulus_num_bits=13,
+        modulus_chain_length=2,
         error_stdev=5,
     )
     pk, sk, debug_data = bgv.gen_keys(params)
@@ -143,7 +163,9 @@ def test_iterated_add_noisy():
     )
     for i in range(iters):
         ct = bgv.add(ct, ct2, params=params)
-        expected = [(x + y) % params.plaintext_coeff_modulus for x, y in zip(expected, m2)]
+        expected = [
+            (x + y) % params.plaintext_coeff_modulus for x, y in zip(expected, m2)
+        ]
         expected_pt = encoding.encode(expected, params)
         error_so_far = math.log2(
             bgv.extract_error_magnitude(ct, expected_pt, sk, params)
