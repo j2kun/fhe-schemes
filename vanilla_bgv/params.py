@@ -68,7 +68,7 @@ class BGVParams:
         self.ciphertext_moduli = []
         q_i = 1
         for i in range(self.modulus_chain_length):
-            q_i *= self.ciphertext_moduli_primes[0]
+            q_i *= self.ciphertext_moduli_primes[i]
             self.ciphertext_moduli.append(q_i)
 
         # required to apply CRT decomposition of the plaintext

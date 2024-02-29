@@ -1,7 +1,9 @@
 import numpy as np
 from hypothesis import given
 from hypothesis import strategies as st
-from vanilla_bgv.number_theory import find_ntt_prime, polymul
+from vanilla_bgv.number_theory import find_ntt_prime, find_ntt_primes, polymul, inverse
+import galois
+import numpy as np
 
 
 def test_find_ntt_prime():
@@ -18,6 +20,16 @@ def test_find_ntt_prime_satisfies_modulus_req(num_bits, log2_m):
     m = 2**log2_m
     actual = find_ntt_prime(num_bits, m)
     assert actual % m == 1
+
+
+@given(
+    st.integers(min_value=4, max_value=128),
+    st.integers(min_value=5, max_value=32),
+)
+def test_find_ntt_primes_all_distinct(num_bits, log2_m):
+    m = 2**log2_m
+    actual = find_ntt_primes(num_bits, m, qty=5)
+    assert len(set(actual)) == len(actual)
 
 
 def _np_polymul_mod(poly1, poly2, poly_mod):
